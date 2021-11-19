@@ -7,8 +7,7 @@ public class Main {
 
 	public static void main(String[] args) {
 		
-		ExcelExtractor excelExtractor = new ExcelExtractor();
-		ExcelExtractorT excelExtractorT = new ExcelExtractorT();
+		//ExcelExtractor excelExtractor = new ExcelExtractor();
 		
 		File sourceDir = new File(args[0]);
 		File parentDir = sourceDir.getParentFile();
@@ -66,34 +65,25 @@ public class Main {
 					menInfoFile = parentDir.listFiles(menFilter)[0];
 					mobInfoFile = parentDir.listFiles(mobFilter)[0];
 					
-//					excelExtractorT
-//					ThreadExtrator hosThread = new ThreadExtrator(hosFileList, hosInfoFile);
-//					ThreadExtrator menThread = new ThreadExtrator(menFileList, menInfoFile);
-//					ThreadExtrator mobThread = new ThreadExtrator(mobFileList, mobInfoFile);
-//					
-//					new Thread(hosThread).start();
-//					new Thread(menThread).start();
-//					new Thread(mobThread).start();
-//					
-//					hosThread.getResult();
-//					menThread.getResult();
-//					mobThread.getResult();
+					(new ExcelThreadExtractor()).run(hosFileList, hosInfoFile);
+					(new ExcelThreadExtractor()).run(menFileList, menInfoFile);
+					(new ExcelThreadExtractor()).run(mobFileList, mobInfoFile);
 					
 				} else {
 					String jobType = args[1];
 					
 					if(jobType.equals("hos")) {
 						hosInfoFile = parentDir.listFiles(hosFilter)[0];
-						excelExtractor.Extractor(hosFileList, hosInfoFile);
-						
+						//excelExtractor.Extractor(hosFileList, hosInfoFile);
+						(new ExcelThreadExtractor()).run(hosFileList, hosInfoFile);
 					} else if(jobType.equals("men")) {
 						menInfoFile = parentDir.listFiles(menFilter)[0];
-						excelExtractor.Extractor(menFileList, menInfoFile);
-						
+						//excelExtractor.Extractor(menFileList, menInfoFile);
+						(new ExcelThreadExtractor()).run(menFileList, menInfoFile);
 					} else if(jobType.equals("mob")) {
 						mobInfoFile = parentDir.listFiles(mobFilter)[0];
-						excelExtractor.Extractor(mobFileList, mobInfoFile);
-						
+						//excelExtractor.Extractor(mobFileList, mobInfoFile);
+						(new ExcelThreadExtractor()).run(mobFileList, mobInfoFile);
 					}
 					
 				}

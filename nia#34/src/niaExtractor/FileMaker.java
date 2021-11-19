@@ -19,6 +19,8 @@ public class FileMaker {
 	@SuppressWarnings("unchecked")
 	public void fileMaker(ArrayList<String> infoData, HashMap<String, String> metaData, HashMap<String, String> typeData, String text, String sourceFileName, String scriptFileName) {
 		
+		HashMap<String, String> tempMeta = new LinkedHashMap<String,String>();
+
 		String textPath = "Y:\\04.라벨링데이터\\";
 		String audioPath = "Y:\\03.원천데이터\\";
 		
@@ -26,14 +28,13 @@ public class FileMaker {
 		
 		JSONArray infoArray = new JSONArray();
 		JSONArray dialogArray = new JSONArray();
-		
-		//JSONObject tempMeta = new JSONObject(new LinkedHashMap<String,String>());
-		HashMap<String, String> tempMeta = new LinkedHashMap<String,String>();
+		JSONArray textArray = new JSONArray();
+
 		
 		JSONObject dialogObject = new JSONObject(new LinkedHashMap<String,String>());
 		JSONObject metaObject = new JSONObject(new LinkedHashMap<String,String>());
-		
 		JSONObject resultObject = new JSONObject(new LinkedHashMap<String,String>());
+		JSONObject textObject = new JSONObject(new LinkedHashMap<String,String>());
 		
 		String dirLocation;
 		String category1 = metaData.get("category1").toString().trim();
@@ -54,8 +55,6 @@ public class FileMaker {
 		metaObject.put("metadata", tempMeta);
 		
 		infoArray.add(metaObject);
-		
-		//resultObject.put("info", infoArray);
 	
 		if(category1.equals("대학병원")) {
 			textPath += "01.대학병원\\";
@@ -164,7 +163,7 @@ public class FileMaker {
 				textPath += "01.차량요청\\";
 				audioPath += "01.차량요청\\";
 				break;
-			case "예약변경및취소" :
+			case "예약변경 및 취소" :
 				textPath += "02.예약변경 및 취소\\";
 				audioPath += "02.예약변경 및 취소\\";
 				break;
@@ -277,19 +276,23 @@ public class FileMaker {
 			
 		}
 		
-		dialogObject.put("textPath", textPath+scriptFileName+"\\"+sourceFileName+".txt"); 
+		//dialogObject.put("textPath", textPath+scriptFileName+"\\"+sourceFileName+".txt"); 
 		dialogObject.put("audioPath", audioPath+scriptFileName+"\\"+sourceFileName+".wav");
 		
 		dialogArray.add(dialogObject);
 		
+		textObject.put("orgtext", text);
+		textArray.add(textObject);
+		
 		resultObject.put("dialogs", dialogArray);
 		resultObject.put("info", infoArray);
+		resultObject.put("inputText",textArray);
 		
 		dirLocation = textPath.substring(13);
 		
 		File dir = new File("./" + dirLocation.replace("\\","/") + scriptFileName);
 		File jsonFile = new File("./" + dirLocation.replace("\\","/") + scriptFileName + "/" + sourceFileName+".json");
-		File textFile = new File("./" + dirLocation.replace("\\","/") + scriptFileName + "/" + sourceFileName+".txt");
+//		File textFile = new File("./" + dirLocation.replace("\\","/") + scriptFileName + "/" + sourceFileName+".txt");
 		
 		if(!dir.exists()) {
 			dir.mkdirs();
@@ -303,10 +306,10 @@ public class FileMaker {
 			jsonFileWriter.flush();
 			jsonFileWriter.close();
 			
-			FileWriter textFileWriter = new FileWriter(textFile);
-			textFileWriter.write(text);
-			textFileWriter.flush();
-			textFileWriter.close();
+//			FileWriter textFileWriter = new FileWriter(textFile);
+//			textFileWriter.write(text);
+//			textFileWriter.flush();
+//			textFileWriter.close();
 		} catch(FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
