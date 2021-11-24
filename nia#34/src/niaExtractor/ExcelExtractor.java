@@ -21,10 +21,10 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class ExcelExtractor {
 	
 	@SuppressWarnings("unchecked")
-	public Map<String, List<String>> Extractor(File[] fileList, File infoFile) {
+	public Map<String, String> Extractor(File[] fileList, File infoFile) {
 		
 		Map<String, ArrayList<String>> infoList = new LinkedHashMap<String, ArrayList<String>>();
-		Map<String, List<String>> failInfoList = new HashMap<String, List<String>>();
+		Map<String, String> failInfoList = new HashMap<String, String>();
 		
 		List<String> scriptMiss = new ArrayList<String>();
 		List<String> wrongExcel = new ArrayList<String>();
@@ -32,6 +32,7 @@ public class ExcelExtractor {
 		Set<String> deleteDupItem = null;
 		
 		FileMaker fileMaker = new FileMaker();
+		FileZipUp fileZip = new FileZipUp();
 		
 		int totalRow = 0;
 		
@@ -86,7 +87,7 @@ public class ExcelExtractor {
 			HashMap<String, String> customer = new LinkedHashMap<String,String>();
 			
 			String tempFileName;
-			String fileName;
+			String fileName = "";
 			String speakerType;
 			String seqNum;
 			String tempText;
@@ -230,6 +231,14 @@ public class ExcelExtractor {
 			}
 			System.out.println("\n스크립트 파일 리딩 완료 종료 시간 "+ LocalTime.now());
 			
+			if(fileName.contains("HOS")) {
+				fileZip.compress("./result/01.대학병원");				
+			} else if(fileName.contains("MOB")) {
+				fileZip.compress("./result/02.광역이동지원센터");
+			} else if(fileName.contains("MEN")) {
+				fileZip.compress("./result/03.정신건강복지센터");
+			}
+			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (InvalidFormatException e) {
@@ -246,8 +255,8 @@ public class ExcelExtractor {
 		scriptMiss = new ArrayList<String>(deleteDupItem);
 		
 		//리스트에 담기
-		failInfoList.put("wrong excel", wrongExcel);
-		failInfoList.put("missing script",scriptMiss);
+		failInfoList.put("wrong excel", String.join("\n", wrongExcel));
+		failInfoList.put("missing script", String.join("\n", scriptMiss));
 		
 		return failInfoList;
 	}

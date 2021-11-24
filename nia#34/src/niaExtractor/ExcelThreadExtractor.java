@@ -24,7 +24,7 @@ public class ExcelThreadExtractor{
 		
 	}
 	
-	public void run(File[] fileList, File infoFile) {
+	public void run(File[] fileList, File infoFile, String type) {
 		int totalRow;
 		int countPerProcess;
 		
@@ -36,7 +36,7 @@ public class ExcelThreadExtractor{
 			countPerProcess = (int)Math.ceil(((double) totalRow) / (double) maxCore);
 			
 			infoWorkbook.close();
-			this._runExecutor(fileList, infoFile, countPerProcess, totalRow);
+			this._runExecutor(fileList, infoFile, countPerProcess, totalRow, type);
 			
 		} catch(FileNotFoundException e) {
 			e.printStackTrace();
@@ -48,7 +48,7 @@ public class ExcelThreadExtractor{
 	}
 	
 	
-	private void _runExecutor(File[] fileList, File infoFile, int countPerProcess, int totalRow) {
+	private void _runExecutor(File[] fileList, File infoFile, int countPerProcess, int totalRow, String type) {
 		int start = 0;
 		int end = 0;
 		
@@ -58,7 +58,7 @@ public class ExcelThreadExtractor{
 			
 			Map<String, ArrayList<String>> infoList = this.getInfo(infoFile, start, end);
 			
-			ExcelExtractorTask excelTask = new ExcelExtractorTask(fileList, infoList, countPerProcess);
+			ExcelExtractorTask excelTask = new ExcelExtractorTask(fileList, infoList, countPerProcess, type, idx);
 			
 			executorService.submit(excelTask);
 		}

@@ -1,15 +1,12 @@
 package niaExtractor;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class Main {
@@ -33,9 +30,9 @@ public class Main {
 		File[] menFileList = null;
 		File[] mobFileList = null;
 		
-		Map<String, List<String>> hosFailList = new HashMap<String,List<String>>();
-		Map<String, List<String>> menFailList = new HashMap<String,List<String>>();
-		Map<String, List<String>> mobFailList = new HashMap<String,List<String>>();
+		Map<String, String> hosFailList = new HashMap<String, String>();
+		Map<String, String> menFailList = new HashMap<String, String>();
+		Map<String, String> mobFailList = new HashMap<String, String>();
 		
 		OutputStreamWriter osw = null;
 		
@@ -84,9 +81,9 @@ public class Main {
 					menInfoFile = parentDir.listFiles(menFilter)[0];
 					mobInfoFile = parentDir.listFiles(mobFilter)[0];
 					
-					(new ExcelThreadExtractor()).run(hosFileList, hosInfoFile);
-					(new ExcelThreadExtractor()).run(menFileList, menInfoFile);
-					(new ExcelThreadExtractor()).run(mobFileList, mobInfoFile);
+					(new ExcelThreadExtractor()).run(hosFileList, hosInfoFile, "HOS");
+					(new ExcelThreadExtractor()).run(menFileList, menInfoFile, "MEN");
+					(new ExcelThreadExtractor()).run(mobFileList, mobInfoFile, "MOB");
 					
 				} else {
 					String jobType = args[1];

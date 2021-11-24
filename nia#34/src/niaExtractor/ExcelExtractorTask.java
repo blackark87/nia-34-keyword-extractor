@@ -2,12 +2,17 @@ package niaExtractor;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -18,16 +23,22 @@ public class ExcelExtractorTask implements Runnable{
 
 	private FileMaker fileMaker = new FileMaker();
 	
+	private Map<String, String> failInfoList;
 	private Map<String, ArrayList<String>> infoList;
 	
 	private File[] fileList;
 	
 	private int countPerProcess;
-
-	public ExcelExtractorTask(File[] fileList, Map<String, ArrayList<String>> infoList, int countPerProcess){
+	private int idx;
+	private String type;
+	
+	public ExcelExtractorTask(File[] fileList, Map<String, ArrayList<String>> infoList, int countPerProcess, String type, int idx){
 		this.fileList = fileList;
 		this.infoList = infoList;
 		this.countPerProcess = countPerProcess;
+		this.type = type;
+		this.idx = idx;
+		
 	}
 	
 	@Override
@@ -37,8 +48,14 @@ public class ExcelExtractorTask implements Runnable{
 		
 	private void writeJson(Map<String, ArrayList<String>> infoList) {
 		
+		List<String> scriptMiss = new ArrayList<String>();
+		List<String> wrongExcel = new ArrayList<String>();
+		
+		Set<String> deleteDupItem = null;
+		
 		String threadName = Thread.currentThread().getName();
 		System.out.println(threadName + " / 스크립트 파일 리딩 시작");
+		
 		int processRow = 0;
 		
 		try {
@@ -101,7 +118,7 @@ public class ExcelExtractorTask implements Runnable{
 								} else {
 									wrongFlag = true;
 								}
-								 break;
+								break;
 							case 2:
 								metaData.put("category1",scriptRow.getCell(3).getStringCellValue()); break;
 							case 3:
@@ -128,7 +145,9 @@ public class ExcelExtractorTask implements Runnable{
 								if(scriptRow.getCell(2) != null && !scriptRow.getCell(2).toString().trim().equals("")) {
 									tempText = scriptRow.getCell(2).getStringCellValue();
 									counselorNum++;
-								} else if(scriptRow.getCell(3) != null && !scriptRow.getCell(3).toString().trim().equals("")) {
+								}
+								
+								if(scriptRow.getCell(3) != null && !scriptRow.getCell(3).toString().trim().equals("")) {
 									tempText = scriptRow.getCell(3).toString();
 									customerNum++;
 								}
@@ -158,11 +177,30 @@ public class ExcelExtractorTask implements Runnable{
 							
 						}
 						
+						//json 파일을 썼음으로 엑셀 파일 닫기
 						if(writeFlag) {
 							scriptWorkbook.close();
 							break;
 						}
+						
+						//엑셀 파일이 잘못돼어 있음으로 실패에 추가 후 엘셀 닫기
+						if(wrongFlag) {
+							//failInfoList.put("wrong excel", tempFileName);
+							wrongExcel.add(fileName);
+							scriptWorkbook.close();
+							break;
+						}
 					}
+					
+					//json파일을 못 썼을 경우 실패에 추가
+					if(!writeFlag) {
+						//failInfoList.put("missing script", tempFileName);
+						scriptMiss.add(tempFileName);
+					}
+					
+					//안닫힌 엑셀이 있을수 있음으로 파일이 바뀌면 전 엑셀 파일 닫기
+					scriptWorkbook.close();
+					
 				}
 
 			}
@@ -174,5 +212,38 @@ public class ExcelExtractorTask implements Runnable{
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		//중복 제거
+		deleteDupItem = new HashSet<String>(wrongExcel);
+		wrongExcel = new ArrayList<String>(deleteDupItem);
+		
+		deleteDupItem = new HashSet<String>(scriptMiss);
+		scriptMiss = new ArrayList<String>(deleteDupItem);
+		
+		//리스트에 담기
+		failInfoList.put("wrong excel", String.join("\n", wrongExcel));
+		failInfoList.put("missing script", String.join("\n", scriptMiss));
+		
+		OutputStreamWriter osw = null;
+		
+		if(failInfoList.size() > 0) {
+			
+			try {
+				File failScript = new File("./result/"+this.type+"FailScript_"+idx+".txt");
+				
+				osw = new OutputStreamWriter(new FileOutputStream(failScript));
+				osw.write(failInfoList.toString());
+				osw.flush();
+				osw.close();
+				
+			} catch (SecurityException e){
+				e.printStackTrace();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
+	
 }
