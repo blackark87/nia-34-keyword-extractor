@@ -36,7 +36,6 @@ public class ExcelThreadExtractor{
 			countPerProcess = (int)Math.ceil(((double) totalRow) / (double) maxCore);
 			
 			infoWorkbook.close();
-			
 			this._runExecutor(fileList, infoFile, countPerProcess, totalRow);
 			
 		} catch(FileNotFoundException e) {

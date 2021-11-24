@@ -6,9 +6,12 @@ import java.io.IOException;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -18,15 +21,21 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class ExcelExtractor {
 	
 	@SuppressWarnings("unchecked")
-	public void Extractor(File[] fileList, File infoFile) {
+	public Map<String, List<String>> Extractor(File[] fileList, File infoFile) {
 		
 		Map<String, ArrayList<String>> infoList = new LinkedHashMap<String, ArrayList<String>>();
+		Map<String, List<String>> failInfoList = new HashMap<String, List<String>>();
+		
+		List<String> scriptMiss = new ArrayList<String>();
+		List<String> wrongExcel = new ArrayList<String>();
+		
+		Set<String> deleteDupItem = null;
 		
 		FileMaker fileMaker = new FileMaker();
 		
-		Integer totalRow = 0;
+		int totalRow = 0;
 		
-		System.out.println("음원정보 파일 리딩\n시작 시간 : " + LocalTime.now());
+		System.out.println("음원정보 파일 리딩 시작 시간 : " + LocalTime.now());
 
 		try {
 			System.out.println("현재 음원 정보 파일 = " + infoFile.getName());
@@ -55,7 +64,7 @@ public class ExcelExtractor {
 			}
 			
 			infoWorkbook.close();
-			System.out.println("음원정보 파일 리딩 완료\n종료 시간 " + LocalTime.now());
+			System.out.println("음원정보 파일 리딩 완료 종료 시간 " + LocalTime.now());
 			
 		} catch(FileNotFoundException e) {
 			e.printStackTrace();
@@ -65,7 +74,7 @@ public class ExcelExtractor {
 			e.printStackTrace();
 		}
 
-		System.out.println("스크립트 파일 리딩\n시작 시간 "+ LocalTime.now());
+		System.out.println("스크립트 파일 리딩 시작 시간 "+ LocalTime.now());
 		
 		try {
 			XSSFWorkbook scriptWorkbook = null;
@@ -82,11 +91,12 @@ public class ExcelExtractor {
 			String seqNum;
 			String tempText;
 			
-			Integer counselorNum;
-			Integer customerNum;
-			Integer processRow = 0;
+			int counselorNum;
+			int customerNum;
+			int processRow = 0;
 			
 			boolean writeFlag;
+			boolean wrongFlag;
 			
 			Iterator<String> infoKeyItr = infoList.keySet().iterator();
 			
@@ -107,6 +117,7 @@ public class ExcelExtractor {
 				customerNum = 0;
 
 				writeFlag = false;
+				wrongFlag = false;
 				
 				//System.out.println("현재 음원 정보 = " + tempFileName);
 				for(File scriptFile : fileList) {
@@ -122,7 +133,12 @@ public class ExcelExtractor {
 							
 							switch(rowIdx) {
 							case 1:
-								metaData.put("title", scriptRow.getCell(3).getStringCellValue()); break;
+								if(scriptRow.getCell(2).getStringCellValue().equalsIgnoreCase("title")) {
+									metaData.put("title", scriptRow.getCell(3).getStringCellValue());
+								} else {
+									wrongFlag = true;
+								}
+								break;
 							case 2:
 								metaData.put("category1",scriptRow.getCell(3).getStringCellValue()); break;
 							case 3:
@@ -146,16 +162,27 @@ public class ExcelExtractor {
 							case 11:
 								break; // 발화 순번 row skip
 							default:
+								//고객 일 경우
 								if(scriptRow.getCell(2) != null && !scriptRow.getCell(2).toString().trim().equals("")) {
 									tempText = scriptRow.getCell(2).getStringCellValue();
 									counselorNum++;
-								} else if(scriptRow.getCell(3) != null && !scriptRow.getCell(3).toString().trim().equals("")) {
+									
+								}
+								
+								//상담사일 경우
+								if(scriptRow.getCell(3) != null && !scriptRow.getCell(3).toString().trim().equals("")) {
 									tempText = scriptRow.getCell(3).toString();
 									customerNum++;
 								}
 								
 							}
 							
+							//엑셀 파일 메타데이터가 잘못 됐을경우 엑셀 파일 루프 벗어남
+							if(wrongFlag) {
+								break;
+							}
+							
+							//실제 스크립트는 엑셀 파일 12번쨰 row 부터 있음
 							if(rowIdx > 11) {
 								if(speakerType.equals("B")) {
 									if(Integer.parseInt(seqNum) == customerNum) {
@@ -175,11 +202,25 @@ public class ExcelExtractor {
 							
 						}
 						
+						//json 파일을 썼음으로 엑셀 파일 닫기
 						if(writeFlag) {
-							//json 파일을 생성 하면 음원 정보가 다른 파일로 변경 될수 있음으로 엑셀 닫기
 							scriptWorkbook.close();
 							break;
 						}
+						
+						//엑셀 파일이 잘못돼어 있음으로 실패에 추가 후 엘셀 닫기
+						if(wrongFlag) {
+							//failInfoList.put("wrong excel", tempFileName);
+							wrongExcel.add(fileName);
+							scriptWorkbook.close();
+							break;
+						}
+					}
+					
+					//json파일을 못 썼을 경우 실패에 추가
+					if(!writeFlag) {
+						//failInfoList.put("missing script", tempFileName);
+						scriptMiss.add(tempFileName);
 					}
 					
 					//안닫힌 엑셀이 있을수 있음으로 파일이 바뀌면 전 엑셀 파일 닫기
@@ -187,14 +228,28 @@ public class ExcelExtractor {
 				}
 
 			}
-			System.out.println("\n스크립트 파일 리딩 완료\n종료 시간 "+ LocalTime.now());
+			System.out.println("\n스크립트 파일 리딩 완료 종료 시간 "+ LocalTime.now());
 			
-		} catch(FileNotFoundException e) {
+		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (InvalidFormatException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		//중복 제거
+		deleteDupItem = new HashSet<String>(wrongExcel);
+		wrongExcel = new ArrayList<String>(deleteDupItem);
+		
+		deleteDupItem = new HashSet<String>(scriptMiss);
+		scriptMiss = new ArrayList<String>(deleteDupItem);
+		
+		//리스트에 담기
+		failInfoList.put("wrong excel", wrongExcel);
+		failInfoList.put("missing script",scriptMiss);
+		
+		return failInfoList;
 	}
+	
 }

@@ -23,23 +23,16 @@ public class ExcelExtractorTask implements Runnable{
 	private File[] fileList;
 	
 	private int countPerProcess;
-	//private File infoFile;
-	
-	//private int startIdx;
-	//private int endIdx;
-	
+
 	public ExcelExtractorTask(File[] fileList, Map<String, ArrayList<String>> infoList, int countPerProcess){
 		this.fileList = fileList;
 		this.infoList = infoList;
 		this.countPerProcess = countPerProcess;
-		//this.infoFile = infoFile;
-		//this.startIdx = startIdx;
-		//this.endIdx = endIdx;
 	}
 	
 	@Override
 	public void run() {
-		writeJson(this.infoList);
+		this.writeJson(this.infoList);
 	}
 		
 	private void writeJson(Map<String, ArrayList<String>> infoList) {
@@ -67,7 +60,7 @@ public class ExcelExtractorTask implements Runnable{
 			Integer customerNum;
 			
 			boolean writeFlag;
-			
+			boolean wrongFlag;
 			Iterator<String> infoKeyItr = infoList.keySet().iterator();
 			
 			while(infoKeyItr.hasNext()) {
@@ -75,7 +68,7 @@ public class ExcelExtractorTask implements Runnable{
 				processRow++;
 				
 				if(processRow % 100 == 0) {
-					System.out.printf("\r현재 쓰레드 : " + threadName + " - " + processRow + " / " + this.countPerProcess + "처리중");
+					System.out.println("\r현재 쓰레드 : " + threadName + " - " + processRow + " / " + this.countPerProcess + "처리중");
 				}
 				
 				tempFileName = infoKeyItr.next();
@@ -88,6 +81,7 @@ public class ExcelExtractorTask implements Runnable{
 				customerNum = 0;
 
 				writeFlag = false;
+				wrongFlag = false;
 				
 				for(File scriptFile : this.fileList) {
 					if(!scriptFile.getName().substring(0,scriptFile.getName().lastIndexOf(".")).equals(fileName)) {
@@ -102,7 +96,12 @@ public class ExcelExtractorTask implements Runnable{
 							
 							switch(rowIdx) {
 							case 1:
-								metaData.put("title", scriptRow.getCell(3).getStringCellValue()); break;
+								if(scriptRow.getCell(2).getStringCellValue().equalsIgnoreCase("title")) {
+									metaData.put("title", scriptRow.getCell(3).getStringCellValue());
+								} else {
+									wrongFlag = true;
+								}
+								 break;
 							case 2:
 								metaData.put("category1",scriptRow.getCell(3).getStringCellValue()); break;
 							case 3:
@@ -136,6 +135,10 @@ public class ExcelExtractorTask implements Runnable{
 								
 							}
 							
+							if(wrongFlag) {
+								break;
+							}
+							
 							if(rowIdx > 11) {
 								if(speakerType.equals("B")) {
 									if(Integer.parseInt(seqNum) == customerNum) {
@@ -163,7 +166,7 @@ public class ExcelExtractorTask implements Runnable{
 				}
 
 			}
-			System.out.println("스크립트 파일 처리 완료");
+			System.out.println(threadName + "스크립트 파일 처리 완료");
 		} catch(FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (InvalidFormatException e) {

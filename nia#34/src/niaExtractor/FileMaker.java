@@ -290,26 +290,27 @@ public class FileMaker {
 		
 		dirLocation = textPath.substring(13);
 		
-		File dir = new File("./" + dirLocation.replace("\\","/") + scriptFileName);
-		File jsonFile = new File("./" + dirLocation.replace("\\","/") + scriptFileName + "/" + sourceFileName+".json");
-//		File textFile = new File("./" + dirLocation.replace("\\","/") + scriptFileName + "/" + sourceFileName+".txt");
+		File dir = new File("./result/" + dirLocation.replace("\\","/") + scriptFileName);
+		File jsonFile = new File("./result/" + dirLocation.replace("\\","/") + scriptFileName + "/" + sourceFileName+".json");
+		File textFile = new File("./result/" + dirLocation.replace("\\","/") + scriptFileName + "/" + sourceFileName+".txt");
 		
 		if(!dir.exists()) {
 			dir.mkdirs();
 		}
 		
 		try {
-			FileWriter jsonFileWriter = new FileWriter(jsonFile);
+			FileWriter fileWriter = new FileWriter(jsonFile);
 			
 			String json = gson.toJson(resultObject);
-			jsonFileWriter.write(json);
-			jsonFileWriter.flush();
-			jsonFileWriter.close();
+			fileWriter.write(json);
+			fileWriter.flush();
+			fileWriter.close();
 			
-//			FileWriter textFileWriter = new FileWriter(textFile);
-//			textFileWriter.write(text);
-//			textFileWriter.flush();
-//			textFileWriter.close();
+			//FileWriter textFileWriter = new FileWriter(textFile);
+			fileWriter = new FileWriter(textFile);
+			fileWriter.write(text);
+			fileWriter.flush();
+			fileWriter.close();
 		} catch(FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {

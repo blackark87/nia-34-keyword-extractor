@@ -1,13 +1,22 @@
 package niaExtractor;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Main {
 
 	public static void main(String[] args) {
 		
-		//ExcelExtractor excelExtractor = new ExcelExtractor();
+		ExcelExtractor excelExtractor = new ExcelExtractor();
 		
 		File sourceDir = new File(args[0]);
 		File parentDir = sourceDir.getParentFile();
@@ -16,10 +25,20 @@ public class Main {
 		File menInfoFile = null;
 		File mobInfoFile = null;
 		
+		File hosFailScript = null;
+		File menFailScript = null;
+		File mobFailScript = null;
+		
 		File[] hosFileList = null;
 		File[] menFileList = null;
 		File[] mobFileList = null;
-				
+		
+		Map<String, List<String>> hosFailList = new HashMap<String,List<String>>();
+		Map<String, List<String>> menFailList = new HashMap<String,List<String>>();
+		Map<String, List<String>> mobFailList = new HashMap<String,List<String>>();
+		
+		OutputStreamWriter osw = null;
+		
 		FilenameFilter hosFilter = new FilenameFilter() {
 			
 			@Override
@@ -74,22 +93,56 @@ public class Main {
 					
 					if(jobType.equals("hos")) {
 						hosInfoFile = parentDir.listFiles(hosFilter)[0];
-						//excelExtractor.Extractor(hosFileList, hosInfoFile);
-						(new ExcelThreadExtractor()).run(hosFileList, hosInfoFile);
+						hosFailList = excelExtractor.Extractor(hosFileList, hosInfoFile);
+						//(new ExcelThreadExtractor()).run(hosFileList, hosInfoFile);
+						
+						if(hosFailList.size() > 0) {
+							hosFailScript = new File("./result/HOSFailScript.txt");
+							
+							osw = new OutputStreamWriter(new FileOutputStream(hosFailScript));
+							osw.write(hosFailList.toString());
+							osw.flush();
+							osw.close();
+						}
+						
 					} else if(jobType.equals("men")) {
 						menInfoFile = parentDir.listFiles(menFilter)[0];
-						//excelExtractor.Extractor(menFileList, menInfoFile);
-						(new ExcelThreadExtractor()).run(menFileList, menInfoFile);
+						menFailList = excelExtractor.Extractor(menFileList, menInfoFile);
+						//(new ExcelThreadExtractor()).run(menFileList, menInfoFile);
+						
+						if(menFailList.size() > 0) {
+							menFailScript = new File("./result/MENFailScript.txt");
+							
+							osw = new OutputStreamWriter(new FileOutputStream(menFailScript));
+							osw.write(menFailList.toString());
+							osw.flush();
+							osw.close();
+							
+						}
 					} else if(jobType.equals("mob")) {
 						mobInfoFile = parentDir.listFiles(mobFilter)[0];
-						//excelExtractor.Extractor(mobFileList, mobInfoFile);
-						(new ExcelThreadExtractor()).run(mobFileList, mobInfoFile);
+						mobFailList = excelExtractor.Extractor(mobFileList, mobInfoFile);
+						//(new ExcelThreadExtractor()).run(mobFileList, mobInfoFile);
+						
+						if(mobFailList.size() > 0) {
+							mobFailScript = new File("./result/MOBFailScript.txt");
+							
+							osw = new OutputStreamWriter(new FileOutputStream(mobFailScript));
+							osw.write(mobFailList.toString());
+							osw.flush();
+							osw.close();
+							
+						}
 					}
 					
 				}
 			}
 			
-		} catch (SecurityException e) {
+		} catch (SecurityException e){
+			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
