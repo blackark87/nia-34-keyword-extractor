@@ -12,7 +12,7 @@ public class FileZipUp {
 
 	public void compress(String path) {
 		
-		String zipFileName = path.substring(path.lastIndexOf("/")) + ".zip";
+		String zipFileName = path.substring(path.lastIndexOf("/")+1) + ".zip";
 		String zipFileLocation = path.substring(0,path.lastIndexOf("/"));
 
 		int len;
@@ -20,6 +20,10 @@ public class FileZipUp {
 		byte[] buf = new byte[1024];
 		
 		File directory = new File(path);
+		File secondDir = null;
+		File thirdDir = null;
+		File forthDir = null;
+		
 		File[] fileList = directory.listFiles();
 		
 		FileOutputStream fos = null;
@@ -27,10 +31,25 @@ public class FileZipUp {
 		FileInputStream fis = null;
 		
 		try {
-			fos = new FileOutputStream(new File(zipFileLocation + zipFileName));
+			fos = new FileOutputStream(new File(zipFileLocation + "/" + zipFileName));
 			zos = new ZipOutputStream(fos);
 			
 			for(File file : fileList) {
+				if(file.isDirectory()) {
+					secondDir = new File(file.getAbsolutePath());
+					if(secondDir.isDirectory()) {
+						thirdDir = new File(secondDir.getAbsolutePath());
+						if(thirdDir.isDirectory()) {
+							forthDir = new File(thirdDir.getAbsolutePath());
+							if(!forthDir.isDirectory()) {
+								fileList = forthDir.listFiles();
+								file = fileList[0];
+							}
+						}
+					}
+					
+				}
+				
 				len = 0;
 				fis = new FileInputStream(file.getAbsoluteFile());
 				zos.putNextEntry(new ZipEntry(file.getName()));
