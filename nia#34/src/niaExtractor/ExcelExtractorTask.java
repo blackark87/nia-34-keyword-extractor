@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -53,10 +54,13 @@ public class ExcelExtractorTask implements Runnable{
 		
 		Set<String> deleteDupItem = null;
 		
-		String threadName = Thread.currentThread().getName();
-		System.out.println(threadName + " / 스크립트 파일 리딩 시작");
+		File tempScriptFile = null;
 		
-		int processRow = 0;
+		String threadName = Thread.currentThread().getName();
+		String orginName = "";
+		String tempFileName = "";
+		
+		Integer processRow = 0;
 		
 		try {
 			XSSFWorkbook scriptWorkbook = null;
@@ -67,11 +71,12 @@ public class ExcelExtractorTask implements Runnable{
 			HashMap<String, String> counselor = new LinkedHashMap<String,String>();
 			HashMap<String, String> customer = new LinkedHashMap<String,String>();
 			
-			String tempFileName;
+			
 			String fileName;
 			String speakerType;
 			String seqNum;
 			String tempText;
+			
 			
 			Integer counselorNum;
 			Integer customerNum;
@@ -85,7 +90,7 @@ public class ExcelExtractorTask implements Runnable{
 				processRow++;
 				
 				if(processRow % 100 == 0) {
-					System.out.println("\r현재 쓰레드 : " + threadName + " - " + processRow + " / " + this.countPerProcess + "처리중");
+					System.out.println(threadName + " - " + processRow + " / " + this.countPerProcess + "처리중");
 				}
 				
 				tempFileName = infoKeyItr.next();
@@ -101,16 +106,26 @@ public class ExcelExtractorTask implements Runnable{
 				wrongFlag = false;
 				
 				for(File scriptFile : this.fileList) {
+					tempScriptFile = scriptFile;
+					
 					if(!scriptFile.getName().substring(0,scriptFile.getName().lastIndexOf(".")).equals(fileName)) {
 						continue;
 					} else {
+						orginName = scriptFile.getName();
+						
+						while(!scriptFile.canRead()) {
+							System.out.println(scriptFile + " is not readable");
+							Thread.sleep(1000L);
+						}
 						
 						scriptWorkbook = new XSSFWorkbook(scriptFile);
+
+						scriptFile.renameTo(new File("temp_"+tempFileName));
+						
 						scriptSheet = scriptWorkbook.getSheetAt(0);
-					
+
 						for(int rowIdx = 1; rowIdx < scriptSheet.getPhysicalNumberOfRows(); rowIdx++) {
 							scriptRow = scriptSheet.getRow(rowIdx);
-							
 							switch(rowIdx) {
 							case 1:
 								if(scriptRow.getCell(2).getStringCellValue().equalsIgnoreCase("title")) {
@@ -200,10 +215,13 @@ public class ExcelExtractorTask implements Runnable{
 					
 					//안닫힌 엑셀이 있을수 있음으로 파일이 바뀌면 전 엑셀 파일 닫기
 					scriptWorkbook.close();
-					
+					scriptFile.renameTo(new File(orginName));
 				}
-
+				if(new File("temp_" + tempFileName).exists()) {
+					FileUtils.delete(new File("temp_" + tempFileName));
+				}
 			}
+			
 			System.out.println(threadName + "스크립트 파일 처리 완료");
 		} catch(FileNotFoundException e) {
 			e.printStackTrace();
@@ -211,6 +229,22 @@ public class ExcelExtractorTask implements Runnable{
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			System.out.println(tempFileName);
+			System.out.println(orginName);
+			e.printStackTrace();
+		} finally {
+			tempScriptFile.renameTo(new File(orginName));
+			
+			if(new File("temp_" + tempFileName).exists()) {
+				try {
+					FileUtils.delete(new File("temp_" + tempFileName));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 		
 		//중복 제거

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -18,7 +19,7 @@ public class FileMaker {
 	
 	@SuppressWarnings("unchecked")
 	public void fileMaker(ArrayList<String> infoData, HashMap<String, String> metaData, HashMap<String, String> typeData, String text, String sourceFileName, String scriptFileName) {
-		
+				
 		HashMap<String, String> tempMeta = new LinkedHashMap<String,String>();
 
 		String textPath = "Y:\\04.라벨링데이터\\";
@@ -290,9 +291,9 @@ public class FileMaker {
 		
 		dirLocation = textPath.substring(13);
 		
-		File dir = new File("./result/" + dirLocation.replace("\\","/") + scriptFileName);
-		File jsonFile = new File("./result/" + dirLocation.replace("\\","/") + scriptFileName + "/" + sourceFileName+".json");
-		File textFile = new File("./result/" + dirLocation.replace("\\","/") + scriptFileName + "/" + sourceFileName+".txt");
+		File dir = new File("./result/" +LocalDate.now() +"/" + dirLocation.replace("\\","/") + scriptFileName);
+		File jsonFile = new File("./result/" +LocalDate.now() +"/" + dirLocation.replace("\\","/") + scriptFileName + "/" + sourceFileName+".json");
+		File textFile = new File("./result/" +LocalDate.now() +"/" + dirLocation.replace("\\","/") + scriptFileName + "/" + sourceFileName+".txt");
 		
 		if(!dir.exists()) {
 			dir.mkdirs();

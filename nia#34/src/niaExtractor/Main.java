@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -94,7 +95,7 @@ public class Main {
 						//(new ExcelThreadExtractor()).run(hosFileList, hosInfoFile);
 						
 						if(hosFailList.size() > 0) {
-							hosFailScript = new File("./result/HOSFailScript.txt");
+							hosFailScript = new File("./result/" +LocalDate.now() +"/대학병원_FailScript.txt");
 							
 							osw = new OutputStreamWriter(new FileOutputStream(hosFailScript));
 							osw.write(hosFailList.toString());
@@ -108,7 +109,7 @@ public class Main {
 						//(new ExcelThreadExtractor()).run(menFileList, menInfoFile);
 						
 						if(menFailList.size() > 0) {
-							menFailScript = new File("./result/MENFailScript.txt");
+							menFailScript = new File("./result/" +LocalDate.now() +"/정신건강복지센터_FailScript.txt");
 							
 							osw = new OutputStreamWriter(new FileOutputStream(menFailScript));
 							osw.write(menFailList.toString());
@@ -118,22 +119,25 @@ public class Main {
 						}
 					} else if(jobType.equals("mob")) {
 						mobInfoFile = parentDir.listFiles(mobFilter)[0];
-						mobFailList = excelExtractor.Extractor(mobFileList, mobInfoFile);
-						//(new ExcelThreadExtractor()).run(mobFileList, mobInfoFile);
-						
-						if(mobFailList.size() > 0) {
-							mobFailScript = new File("./result/MOBFailScript.txt");
-							
-							osw = new OutputStreamWriter(new FileOutputStream(mobFailScript));
-							osw.write(mobFailList.toString());
-							osw.flush();
-							osw.close();
-							
-						}
+						(new ExcelThreadExtractor()).run(mobFileList, mobInfoFile, "MOB");
+//						mobFailList = excelExtractor.Extractor(mobFileList, mobInfoFile);
+//						//(new ExcelThreadExtractor()).run(mobFileList, mobInfoFile);
+//						
+//						if(mobFailList.size() > 0) {
+//							mobFailScript = new File("./result/" +LocalDate.now() +"/광역이동지원센터_FailScript.txt");
+//							
+//							osw = new OutputStreamWriter(new FileOutputStream(mobFailScript));
+//							osw.write(mobFailList.toString());
+//							osw.flush();
+//							osw.close();
+//							
+//						}
 					}
 					
 				}
 			}
+			
+			System.out.println(args[1].toString() + " 작업 완료");
 			
 		} catch (SecurityException e){
 			e.printStackTrace();

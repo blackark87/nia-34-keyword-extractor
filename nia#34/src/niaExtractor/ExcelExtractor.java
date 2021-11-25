@@ -3,6 +3,7 @@ package niaExtractor;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,12 +14,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.zeroturnaround.zip.ZipUtil;
+
 
 public class ExcelExtractor {
+	
 	
 	@SuppressWarnings("unchecked")
 	public Map<String, String> Extractor(File[] fileList, File infoFile) {
@@ -32,7 +38,6 @@ public class ExcelExtractor {
 		Set<String> deleteDupItem = null;
 		
 		FileMaker fileMaker = new FileMaker();
-		FileZipUp fileZip = new FileZipUp();
 		
 		int totalRow = 0;
 		
@@ -231,14 +236,19 @@ public class ExcelExtractor {
 			}
 			System.out.println("\n스크립트 파일 리딩 완료 종료 시간 "+ LocalTime.now());
 			
-			if(fileName.contains("HOS")) {
-				fileZip.compress("./result/01.대학병원");				
-			} else if(fileName.contains("MOB")) {
-				fileZip.compress("./result/02.광역이동지원센터");
-			} else if(fileName.contains("MEN")) {
-				fileZip.compress("./result/03.정신건강복지센터");
-			}
+			System.out.println("폴더 압축 중");
 			
+			if(fileName.contains("HOS")) {
+				ZipUtil.pack(new File("./result/" +LocalDate.now() +"/01.대학병원"), new File("./result/" +LocalDate.now() +"/01.대학병원.zip"));
+				FileUtils.deleteDirectory(new File("./result/" +LocalDate.now() +"/01.대학병원"));
+			} else if(fileName.contains("MOB")) {
+				ZipUtil.pack(new File("./result/" +LocalDate.now() +"/02.광역이동지원센터"), new File("./result/" +LocalDate.now() +"/02.광역이동지원센터.zip"));
+				FileUtils.deleteDirectory(new File("./result/" +LocalDate.now() +"/02.광역이동지원센터"));
+			} else if(fileName.contains("MEN")) {
+				ZipUtil.pack(new File("./result/" +LocalDate.now() +"/03.정신건강복지센터"), new File("./result/" +LocalDate.now() +"/03.정신건강복지센터.zip"));
+				FileUtils.deleteDirectory(new File("./result/" +LocalDate.now() +"/03.정신건강복지센터"));
+			}
+			System.out.println("폴더 압축 완료");
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (InvalidFormatException e) {
