@@ -128,6 +128,9 @@ public class ExcelThreadExtractor{
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (NullPointerException e) {
+			System.out.println("StartIdx = " + startIdx + " / endIdx = " + endIdx );
+			e.printStackTrace();
 		}
 		
 		return infoList;
