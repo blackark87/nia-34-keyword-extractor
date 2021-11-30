@@ -90,7 +90,7 @@ public class ExcelExtractorTask implements Runnable{
 				processRow++;
 				
 				if(processRow % 100 == 0) {
-					System.out.println(threadName + " - " + processRow + " / " + this.countPerProcess + "처리중");
+					System.out.println(threadName + " - " + processRow + " / " + this.countPerProcess + " 처리중");
 				}
 				
 				tempFileName = infoKeyItr.next();
@@ -106,22 +106,20 @@ public class ExcelExtractorTask implements Runnable{
 				wrongFlag = false;
 				
 				for(File scriptFile : this.fileList) {
-					tempScriptFile = scriptFile;
 					
 					if(!scriptFile.getName().substring(0,scriptFile.getName().lastIndexOf(".")).equals(fileName)) {
 						continue;
 					} else {
-						orginName = scriptFile.getName();
+						orginName = scriptFile.getAbsolutePath();
 						
 						while(!scriptFile.canRead()) {
-							System.out.println(scriptFile + " is not readable");
 							Thread.sleep(1000L);
 						}
 						
-						scriptWorkbook = new XSSFWorkbook(scriptFile);
-
 						scriptFile.renameTo(new File("temp_"+tempFileName));
+						tempScriptFile = new File("temp_" + tempFileName);
 						
+						scriptWorkbook = new XSSFWorkbook(tempScriptFile);
 						scriptSheet = scriptWorkbook.getSheetAt(0);
 
 						for(int rowIdx = 1; rowIdx < scriptSheet.getPhysicalNumberOfRows(); rowIdx++) {
@@ -157,12 +155,12 @@ public class ExcelExtractorTask implements Runnable{
 							case 11:
 								break; // 발화 순번 row skip
 							default:
-								if(scriptRow.getCell(2) != null && !scriptRow.getCell(2).toString().trim().equals("")) {
+								if(scriptRow != null && scriptRow.getCell(2) != null && !scriptRow.getCell(2).toString().trim().equals("")) {
 									tempText = scriptRow.getCell(2).getStringCellValue();
 									counselorNum++;
 								}
 								
-								if(scriptRow.getCell(3) != null && !scriptRow.getCell(3).toString().trim().equals("")) {
+								if(scriptRow != null && scriptRow.getCell(3) != null && !scriptRow.getCell(3).toString().trim().equals("")) {
 									tempText = scriptRow.getCell(3).toString();
 									customerNum++;
 								}
@@ -195,29 +193,33 @@ public class ExcelExtractorTask implements Runnable{
 						//json 파일을 썼음으로 엑셀 파일 닫기
 						if(writeFlag) {
 							scriptWorkbook.close();
+							tempScriptFile.renameTo(new File(orginName));
 							break;
 						}
 						
 						//엑셀 파일이 잘못돼어 있음으로 실패에 추가 후 엘셀 닫기
 						if(wrongFlag) {
-							//failInfoList.put("wrong excel", tempFileName);
 							wrongExcel.add(fileName);
 							scriptWorkbook.close();
+							tempScriptFile.renameTo(new File(orginName));
 							break;
 						}
 					}
 					
 					//json파일을 못 썼을 경우 실패에 추가
 					if(!writeFlag) {
-						//failInfoList.put("missing script", tempFileName);
 						scriptMiss.add(tempFileName);
+						tempScriptFile.renameTo(new File(orginName));
 					}
 					
 					//안닫힌 엑셀이 있을수 있음으로 파일이 바뀌면 전 엑셀 파일 닫기
 					scriptWorkbook.close();
-					scriptFile.renameTo(new File(orginName));
+					tempScriptFile.renameTo(new File(orginName));
 				}
+				
 				if(new File("temp_" + tempFileName).exists()) {
+					File tempFile = new File("temp_" + tempFileName); 
+					tempFile.renameTo(new File(orginName));
 					FileUtils.delete(new File("temp_" + tempFileName));
 				}
 			}

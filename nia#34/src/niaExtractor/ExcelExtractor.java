@@ -2,7 +2,9 @@ package niaExtractor;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -27,10 +29,12 @@ public class ExcelExtractor {
 	
 	
 	@SuppressWarnings("unchecked")
-	public Map<String, String> Extractor(File[] fileList, File infoFile) {
+	public void Extractor(File[] fileList, File infoFile) {
 		
 		Map<String, ArrayList<String>> infoList = new LinkedHashMap<String, ArrayList<String>>();
 		Map<String, String> failInfoList = new HashMap<String, String>();
+		
+		OutputStreamWriter osw = null;
 		
 		List<String> scriptMiss = new ArrayList<String>();
 		List<String> wrongExcel = new ArrayList<String>();
@@ -40,6 +44,9 @@ public class ExcelExtractor {
 		FileMaker fileMaker = new FileMaker();
 		
 		int totalRow = 0;
+		String errorFile = "";
+		String type = "";
+		String tempTime = "";
 		
 		System.out.println("음원정보 파일 리딩 시작 시간 : " + LocalTime.now());
 
@@ -130,7 +137,7 @@ public class ExcelExtractor {
 					if(!scriptFile.getName().substring(0,scriptFile.getName().lastIndexOf(".")).equals(fileName)) {
 						continue;
 					} else {
-						
+						errorFile = scriptFile.getName();
 						scriptWorkbook = new XSSFWorkbook(scriptFile);
 						scriptSheet = scriptWorkbook.getSheetAt(0);
 					
@@ -169,14 +176,14 @@ public class ExcelExtractor {
 								break; // 발화 순번 row skip
 							default:
 								//고객 일 경우
-								if(scriptRow.getCell(2) != null && !scriptRow.getCell(2).toString().trim().equals("")) {
+								if(scriptRow != null && scriptRow.getCell(2) != null && !scriptRow.getCell(2).toString().trim().equals("")) {
 									tempText = scriptRow.getCell(2).getStringCellValue();
 									counselorNum++;
 									
 								}
 								
 								//상담사일 경우
-								if(scriptRow.getCell(3) != null && !scriptRow.getCell(3).toString().trim().equals("")) {
+								if(scriptRow != null && scriptRow.getCell(3) != null && !scriptRow.getCell(3).toString().trim().equals("")) {
 									tempText = scriptRow.getCell(3).toString();
 									customerNum++;
 								}
@@ -205,7 +212,6 @@ public class ExcelExtractor {
 								}
 								
 							}
-							
 						}
 						
 						//json 파일을 썼음으로 엑셀 파일 닫기
@@ -238,15 +244,29 @@ public class ExcelExtractor {
 			
 			System.out.println("폴더 압축 중");
 			
+			tempTime = LocalTime.now().toString().substring(0, LocalTime.now().toString().lastIndexOf(".")).replace(":","");
+
 			if(fileName.contains("HOS")) {
-				ZipUtil.pack(new File("./result/" +LocalDate.now() +"/01.대학병원"), new File("./result/" +LocalDate.now() +"/01.대학병원.zip"));
+				ZipUtil.pack(new File("./result/" +LocalDate.now() +"/01.대학병원"), 
+						new File("./result/" + LocalDate.now() +"/01.대학병원_" + tempTime + ".zip"));
+
 				FileUtils.deleteDirectory(new File("./result/" +LocalDate.now() +"/01.대학병원"));
+				
+				type = "hos";
 			} else if(fileName.contains("MOB")) {
-				ZipUtil.pack(new File("./result/" +LocalDate.now() +"/02.광역이동지원센터"), new File("./result/" +LocalDate.now() +"/02.광역이동지원센터.zip"));
+				ZipUtil.pack(new File("./result/" +LocalDate.now() +"/02.광역이동지원센터"),
+						new File("./result/" +LocalDate.now() +"/02.광역이동지원센터_" + tempTime + ".zip"));
+				
 				FileUtils.deleteDirectory(new File("./result/" +LocalDate.now() +"/02.광역이동지원센터"));
+				
+				type = "mob";
 			} else if(fileName.contains("MEN")) {
-				ZipUtil.pack(new File("./result/" +LocalDate.now() +"/03.정신건강복지센터"), new File("./result/" +LocalDate.now() +"/03.정신건강복지센터.zip"));
+				ZipUtil.pack(new File("./result/" +LocalDate.now() +"/03.정신건강복지센터"),
+						new File("./result/" +LocalDate.now() +"/03.정신건강복지센터_" + tempTime + ".zip"));
+				
 				FileUtils.deleteDirectory(new File("./result/" +LocalDate.now() +"/03.정신건강복지센터"));
+				
+				type = "men";
 			}
 			System.out.println("폴더 압축 완료");
 		} catch (FileNotFoundException e) {
@@ -254,6 +274,10 @@ public class ExcelExtractor {
 		} catch (InvalidFormatException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
+			System.out.println("\nerror excel file = " + errorFile);
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			System.out.println("\nerror excel file = " + errorFile);
 			e.printStackTrace();
 		}
 		
@@ -265,10 +289,36 @@ public class ExcelExtractor {
 		scriptMiss = new ArrayList<String>(deleteDupItem);
 		
 		//리스트에 담기
-		failInfoList.put("wrong excel", String.join("\n", wrongExcel));
-		failInfoList.put("missing script", String.join("\n", scriptMiss));
+		failInfoList.put("엑셀 정보 이상", String.join("\n", wrongExcel));
+		failInfoList.put("","");
+		failInfoList.put("음원 정보에는 있으나 대본에 존재 하지 않음", String.join("\n", scriptMiss));
 		
-		return failInfoList;
+		File failScript = null;
+		try {
+			if(failInfoList.size() > 0) {
+				switch(type) {
+				case "hos":
+					failScript = new File("./result/" +LocalDate.now() +"/대학병원_"+tempTime+"_실패 리스트.txt");
+					break;
+				case "mob":
+					failScript = new File("./result/" +LocalDate.now() +"/광역이동지원센터_"+tempTime+"_실패 리스트.txt");
+					break;
+				case "men":
+					failScript = new File("./result/" +LocalDate.now() +"/정신건강복지센터_"+tempTime+"_실패 리스트.txt");
+					break;
+				}
+				
+				osw = new OutputStreamWriter(new FileOutputStream(failScript));
+				osw.write(failInfoList.toString());
+				osw.flush();
+				osw.close();
+			}
+			
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 }

@@ -77,7 +77,7 @@ public class ExcelThreadExtractor{
 		try {
 			for(int idx = 0; idx < maxCore; idx++) {
 				start = idx == 0 ? 1 : (idx * countPerProcess) + 1;
-				end = idx == maxCore ? totalRow + 1 : ((idx + 1) * countPerProcess) + 1;
+				end = idx == (maxCore-1) ? totalRow + 1 : ((idx + 1) * countPerProcess) + 1;
 				
 				Thread.sleep(1000L);
 

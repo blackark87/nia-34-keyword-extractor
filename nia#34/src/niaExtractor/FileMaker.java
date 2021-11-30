@@ -88,9 +88,13 @@ public class FileMaker {
 				textPath += "03.외래\\";
 				audioPath += "03.외래\\";
 				break;
+			case "응급" :
+				textPath += "04.응급\\";
+				audioPath += "04.응급\\";
+				break;
 			case "건강검진" :
-				textPath += "04.건강검진\\";
-				audioPath += "04.건강검진\\";
+				textPath += "05.건강검진\\";
+				audioPath += "05.건강검진\\";
 				break;
 			case "시설안내" :
 				textPath += "01.시설안내\\";
