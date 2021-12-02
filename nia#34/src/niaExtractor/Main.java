@@ -10,22 +10,22 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Main {
 
+	private static Logger logger = LoggerFactory.getLogger(Main.class);
+	
 	public static void main(String[] args) {
 		
 		ExcelExtractor excelExtractor = new ExcelExtractor();
 		
-		File sourceDir = new File(args[0]);
-		File parentDir = sourceDir.getParentFile();
-		
-		File hosInfoFile = null;
-		File menInfoFile = null;
-		File mobInfoFile = null;
-		
-		File[] hosFileList = null;
-		File[] menFileList = null;
-		File[] mobFileList = null;
+		File sourceDir = null;
+		File parentDir = null;
+		File infoFile = null;
+
+		File[] fileList = null;
 		
 		FilenameFilter hosFilter = new FilenameFilter() {
 			
@@ -52,47 +52,50 @@ public class Main {
 		};
 		
 		try {
+			sourceDir = new File(args[0]);
 			if(!sourceDir.isDirectory()) {
-				System.out.println("폴더가 아닙니다.");
+				logger.info("폴더가 아닙니다.");
 				System.exit(-1);
 				
 			} else {
-				hosFileList = sourceDir.listFiles(hosFilter);
-				menFileList = sourceDir.listFiles(menFilter);
-				mobFileList = sourceDir.listFiles(mobFilter);
-
+				parentDir = sourceDir.getParentFile();
+				
 				if(args.length == 1) {
+					fileList = sourceDir.listFiles(hosFilter);
+					infoFile = parentDir.listFiles(hosFilter)[0];
+					(new ExcelThreadExtractor()).run(fileList, infoFile, "HOS");
 					
-					hosInfoFile = parentDir.listFiles(hosFilter)[0];
-					//menInfoFile = parentDir.listFiles(menFilter)[0];
-					//mobInfoFile = parentDir.listFiles(mobFilter)[0];
+					fileList = sourceDir.listFiles(menFilter);
+					infoFile = parentDir.listFiles(menFilter)[0];
+					(new ExcelThreadExtractor()).run(fileList, infoFile, "MEN");
 					
-					(new ExcelThreadExtractor()).run(hosFileList, hosInfoFile, "HOS");
-					//(new ExcelThreadExtractor()).run(menFileList, menInfoFile, "MEN");
-					//(new ExcelThreadExtractor()).run(mobFileList, mobInfoFile, "MOB");
+					fileList = sourceDir.listFiles(mobFilter);
+					infoFile = parentDir.listFiles(mobFilter)[0];
+					(new ExcelThreadExtractor()).run(fileList, infoFile, "MOB");
 					
 				} else {
 					String jobType = args[1];
 					
 					if(jobType.equalsIgnoreCase("hos")) {
-						hosInfoFile = parentDir.listFiles(hosFilter)[0];
-						excelExtractor.Extractor(hosFileList, hosInfoFile);
+						fileList = sourceDir.listFiles(hosFilter);
+						infoFile = parentDir.listFiles(hosFilter)[0];
+						excelExtractor.Extractor(fileList, infoFile);
 						
 					} else if(jobType.equalsIgnoreCase("men")) {
-						menInfoFile = parentDir.listFiles(menFilter)[0];
-						excelExtractor.Extractor(menFileList, menInfoFile);
+						fileList = sourceDir.listFiles(menFilter);
+						infoFile = parentDir.listFiles(menFilter)[0];
+						excelExtractor.Extractor(fileList, infoFile);
 						
 					} else if(jobType.equalsIgnoreCase("mob")) {
-						mobInfoFile = parentDir.listFiles(mobFilter)[0];
-						excelExtractor.Extractor(mobFileList, mobInfoFile);
+						fileList = sourceDir.listFiles(mobFilter);
+						infoFile = parentDir.listFiles(mobFilter)[0];
+						excelExtractor.Extractor(fileList, infoFile);
 						
 					}
-					
 				}
 			}
-			
-			//System.out.println(args[1].toString() + " 작업 완료");
-			
+
+			logger.info("작업 완료");
 		} catch (SecurityException e){
 			e.printStackTrace();
 		}

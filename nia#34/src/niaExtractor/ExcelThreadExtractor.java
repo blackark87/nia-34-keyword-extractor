@@ -49,17 +49,25 @@ public class ExcelThreadExtractor{
 			
 			System.out.println("쓰레드 처리 완료 : " + LocalTime.now());
 			
+			String tempTime = LocalTime.now().toString().substring(0, LocalTime.now().toString().lastIndexOf(".")).replace(":","");
+			
 			if(type.contains("HOS")) {
-				ZipUtil.pack(new File("./result/" +LocalDate.now() +"/01.대학병원"), new File("./result/" +LocalDate.now() +"/01.대학병원.zip"));
+				ZipUtil.pack(new File("./result/" +LocalDate.now() +"/01.대학병원"), 
+						new File("./result/" + LocalDate.now() +"/01.대학병원_" + tempTime + ".zip"));
+
 				FileUtils.deleteDirectory(new File("./result/" +LocalDate.now() +"/01.대학병원"));
 			} else if(type.contains("MOB")) {
-				ZipUtil.pack(new File("./result/" +LocalDate.now() +"/02.광역이동지원센터"), new File("./result/" +LocalDate.now() +"/02.광역이동지원센터.zip"));
+				ZipUtil.pack(new File("./result/" +LocalDate.now() +"/02.광역이동지원센터"),
+						new File("./result/" +LocalDate.now() +"/02.광역이동지원센터_" + tempTime + ".zip"));
+				
 				FileUtils.deleteDirectory(new File("./result/" +LocalDate.now() +"/02.광역이동지원센터"));
 			} else if(type.contains("MEN")) {
-				ZipUtil.pack(new File("./result/" +LocalDate.now() +"/03.정신건강복지센터"), new File("./result/" +LocalDate.now() +"/03.정신건강복지센터.zip"));
+				ZipUtil.pack(new File("./result/" +LocalDate.now() +"/03.정신건강복지센터"),
+						new File("./result/" +LocalDate.now() +"/03.정신건강복지센터_" + tempTime + ".zip"));
+				
 				FileUtils.deleteDirectory(new File("./result/" +LocalDate.now() +"/03.정신건강복지센터"));
 			}
-			
+						
 		} catch(FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (InvalidFormatException e) {

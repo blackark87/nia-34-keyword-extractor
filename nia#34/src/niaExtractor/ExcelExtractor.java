@@ -22,11 +22,14 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zeroturnaround.zip.ZipUtil;
 
 
 public class ExcelExtractor {
 	
+	private static Logger logger = LoggerFactory.getLogger(ExcelExtractor.class);
 	
 	@SuppressWarnings("unchecked")
 	public void Extractor(File[] fileList, File infoFile) {
@@ -48,10 +51,10 @@ public class ExcelExtractor {
 		String type = "";
 		String tempTime = "";
 		
-		System.out.println("음원정보 파일 리딩 시작 시간 : " + LocalTime.now());
+		logger.info("음원정보 파일 리딩 시작 시간 : " + LocalTime.now());
 
 		try {
-			System.out.println("현재 음원 정보 파일 = " + infoFile.getName());
+			logger.info("현재 음원 정보 파일 = " + infoFile.getName());
 		
 			XSSFWorkbook infoWorkbook = new XSSFWorkbook(infoFile);
 			XSSFSheet infoSheet = infoWorkbook.getSheetAt(0);
@@ -61,7 +64,7 @@ public class ExcelExtractor {
 			
 			totalRow = infoSheet.getPhysicalNumberOfRows();
 			
-			System.out.println("음원 정보 개수 = " + (totalRow+1) + "건");
+			logger.info("음원 정보 개수 = " + (totalRow-1) + "건");
 			
 			for(int rowIdx = 1; rowIdx < totalRow; rowIdx++) {
 				infoRow = infoSheet.getRow(rowIdx);
@@ -77,7 +80,7 @@ public class ExcelExtractor {
 			}
 			
 			infoWorkbook.close();
-			System.out.println("음원정보 파일 리딩 완료 종료 시간 " + LocalTime.now());
+			logger.info("음원정보 파일 리딩 완료 종료 시간 " + LocalTime.now());
 			
 		} catch(FileNotFoundException e) {
 			e.printStackTrace();
@@ -87,7 +90,7 @@ public class ExcelExtractor {
 			e.printStackTrace();
 		}
 
-		System.out.println("스크립트 파일 리딩 시작 시간 "+ LocalTime.now());
+		logger.info("스크립트 파일 리딩 시작 시간 "+ LocalTime.now());
 		
 		try {
 			XSSFWorkbook scriptWorkbook = null;
@@ -132,7 +135,6 @@ public class ExcelExtractor {
 				writeFlag = false;
 				wrongFlag = false;
 				
-				//System.out.println("현재 음원 정보 = " + tempFileName);
 				for(File scriptFile : fileList) {
 					if(!scriptFile.getName().substring(0,scriptFile.getName().lastIndexOf(".")).equals(fileName)) {
 						continue;
@@ -222,7 +224,6 @@ public class ExcelExtractor {
 						
 						//엑셀 파일이 잘못돼어 있음으로 실패에 추가 후 엘셀 닫기
 						if(wrongFlag) {
-							//failInfoList.put("wrong excel", tempFileName);
 							wrongExcel.add(fileName);
 							scriptWorkbook.close();
 							break;
@@ -231,7 +232,6 @@ public class ExcelExtractor {
 					
 					//json파일을 못 썼을 경우 실패에 추가
 					if(!writeFlag) {
-						//failInfoList.put("missing script", tempFileName);
 						scriptMiss.add(tempFileName);
 					}
 					
@@ -240,9 +240,9 @@ public class ExcelExtractor {
 				}
 
 			}
-			System.out.println("\n스크립트 파일 리딩 완료 종료 시간 "+ LocalTime.now());
+			logger.info("스크립트 파일 리딩 완료 종료 시간 "+ LocalTime.now());
 			
-			System.out.println("폴더 압축 중");
+			logger.info("폴더 압축 중");
 			
 			tempTime = LocalTime.now().toString().substring(0, LocalTime.now().toString().lastIndexOf(".")).replace(":","");
 
@@ -268,17 +268,19 @@ public class ExcelExtractor {
 				
 				type = "men";
 			}
-			System.out.println("폴더 압축 완료");
+			
+			logger.info("폴더 압축 완료");
+			
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
 		} catch (InvalidFormatException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
 		} catch (IOException e) {
-			System.out.println("\nerror excel file = " + errorFile);
-			e.printStackTrace();
+			logger.error("error excel file = " + errorFile);
+			logger.error(e.getMessage());
 		} catch (NullPointerException e) {
-			System.out.println("\nerror excel file = " + errorFile);
-			e.printStackTrace();
+			logger.error("error excel file = " + errorFile);
+			logger.error(e.getMessage());
 		}
 		
 		//중복 제거
@@ -290,7 +292,6 @@ public class ExcelExtractor {
 		
 		//리스트에 담기
 		failInfoList.put("엑셀 정보 이상", String.join("\n", wrongExcel));
-		failInfoList.put("","");
 		failInfoList.put("음원 정보에는 있으나 대본에 존재 하지 않음", String.join("\n", scriptMiss));
 		
 		File failScript = null;

@@ -19,13 +19,17 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ExcelExtractorTask implements Runnable{
 
+	private static Logger logger = LoggerFactory.getLogger(ExcelExtractorTask.class);
+	
 	private FileMaker fileMaker = new FileMaker();
 	
-	private Map<String, String> failInfoList;
-	private Map<String, ArrayList<String>> infoList;
+	private Map<String, String> failInfoList = null;
+	private Map<String, ArrayList<String>> infoList = null;
 	
 	private File[] fileList;
 	
@@ -48,6 +52,7 @@ public class ExcelExtractorTask implements Runnable{
 	}
 		
 	private void writeJson(Map<String, ArrayList<String>> infoList) {
+		OutputStreamWriter osw = null;
 		
 		List<String> scriptMiss = new ArrayList<String>();
 		List<String> wrongExcel = new ArrayList<String>();
@@ -90,7 +95,7 @@ public class ExcelExtractorTask implements Runnable{
 				processRow++;
 				
 				if(processRow % 100 == 0) {
-					System.out.println(threadName + " - " + processRow + " / " + this.countPerProcess + " 처리중");
+					logger.info(threadName + " - " + processRow + " / " + this.countPerProcess + " 처리중");
 				}
 				
 				tempFileName = infoKeyItr.next();
@@ -224,7 +229,7 @@ public class ExcelExtractorTask implements Runnable{
 				}
 			}
 			
-			System.out.println(threadName + "스크립트 파일 처리 완료");
+			logger.info(threadName + "스크립트 파일 처리 완료");
 		} catch(FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (InvalidFormatException e) {
@@ -234,8 +239,8 @@ public class ExcelExtractorTask implements Runnable{
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		} catch (NullPointerException e) {
-			System.out.println(tempFileName);
-			System.out.println(orginName);
+			logger.info(tempFileName);
+			logger.info(orginName);
 			e.printStackTrace();
 		} finally {
 			tempScriptFile.renameTo(new File(orginName));
@@ -250,25 +255,25 @@ public class ExcelExtractorTask implements Runnable{
 		}
 		
 		//중복 제거
-		deleteDupItem = new HashSet<String>(wrongExcel);
-		wrongExcel = new ArrayList<String>(deleteDupItem);
+		if(wrongExcel.size() > 0) {
+			deleteDupItem = new HashSet<String>(wrongExcel);
+			wrongExcel = new ArrayList<String>(deleteDupItem);
+			this.failInfoList.put("wrong excel", String.join("\n", wrongExcel));
+		}
 		
-		deleteDupItem = new HashSet<String>(scriptMiss);
-		scriptMiss = new ArrayList<String>(deleteDupItem);
+		if(scriptMiss.size() > 0) {
+			deleteDupItem = new HashSet<String>(scriptMiss);
+			scriptMiss = new ArrayList<String>(deleteDupItem);
+			this.failInfoList.put("missing script", String.join("\n", scriptMiss));
+		}
 		
-		//리스트에 담기
-		failInfoList.put("wrong excel", String.join("\n", wrongExcel));
-		failInfoList.put("missing script", String.join("\n", scriptMiss));
-		
-		OutputStreamWriter osw = null;
-		
-		if(failInfoList.size() > 0) {
+		if(this.failInfoList != null && this.failInfoList.size() > 0) {
 			
 			try {
 				File failScript = new File("./result/"+this.type+"FailScript_"+idx+".txt");
 				
 				osw = new OutputStreamWriter(new FileOutputStream(failScript));
-				osw.write(failInfoList.toString());
+				osw.write(this.failInfoList.toString());
 				osw.flush();
 				osw.close();
 				

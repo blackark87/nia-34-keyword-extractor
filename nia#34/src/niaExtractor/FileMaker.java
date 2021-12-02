@@ -11,11 +11,15 @@ import java.util.LinkedHashMap;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 public class FileMaker {
+	
+	private static Logger logger = LoggerFactory.getLogger(FileMaker.class);
 	
 	@SuppressWarnings("unchecked")
 	public void fileMaker(ArrayList<String> infoData, HashMap<String, String> metaData, HashMap<String, String> typeData, String text, String sourceFileName, String scriptFileName) {
