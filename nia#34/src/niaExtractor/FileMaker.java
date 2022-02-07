@@ -18,9 +18,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 public class FileMaker {
-	
-	private static Logger logger = LoggerFactory.getLogger(FileMaker.class);
-	
+
 	@SuppressWarnings("unchecked")
 	public void fileMaker(ArrayList<String> infoData, HashMap<String, String> metaData, HashMap<String, String> typeData, String text, String sourceFileName, String scriptFileName) {
 				

@@ -28,33 +28,30 @@ import org.zeroturnaround.zip.ZipUtil;
 
 
 public class ExcelExtractor {
-	
-	private static Logger logger = LoggerFactory.getLogger(ExcelExtractor.class);
-	
+
 	@SuppressWarnings("unchecked")
 	public void Extractor(File[] fileList, File infoFile) {
 		
 		Map<String, ArrayList<String>> infoList = new LinkedHashMap<String, ArrayList<String>>();
 		Map<String, String> failInfoList = new HashMap<String, String>();
-		
-		OutputStreamWriter osw = null;
-		
+
 		List<String> scriptMiss = new ArrayList<String>();
 		List<String> wrongExcel = new ArrayList<String>();
-		
+
 		Set<String> deleteDupItem = null;
-		
+
+		OutputStreamWriter osw = null;
+
 		FileMaker fileMaker = new FileMaker();
-		
-		int totalRow = 0;
+
 		String errorFile = "";
 		String type = "";
 		String tempTime = "";
-		
-		logger.info("음원정보 파일 리딩 시작 시간 : " + LocalTime.now());
+
+		int totalRow = 0;
 
 		try {
-			logger.info("현재 음원 정보 파일 = " + infoFile.getName());
+			System.out.println("현재 음원 정보 파일 = " + infoFile.getName());
 		
 			XSSFWorkbook infoWorkbook = new XSSFWorkbook(infoFile);
 			XSSFSheet infoSheet = infoWorkbook.getSheetAt(0);
@@ -63,9 +60,7 @@ public class ExcelExtractor {
 			ArrayList<String> tempList = new ArrayList<String>();
 			
 			totalRow = infoSheet.getPhysicalNumberOfRows();
-			
-			logger.info("음원 정보 개수 = " + (totalRow-1) + "건");
-			
+
 			for(int rowIdx = 1; rowIdx < totalRow; rowIdx++) {
 				infoRow = infoSheet.getRow(rowIdx);
 				
@@ -76,11 +71,12 @@ public class ExcelExtractor {
 				tempList.add(infoRow.getCell(5).getStringCellValue());
 				
 				infoList.put(infoRow.getCell(0).getStringCellValue(), (ArrayList<String>) tempList.clone());
+
 				tempList.clear();
 			}
 			
 			infoWorkbook.close();
-			logger.info("음원정보 파일 리딩 완료 종료 시간 " + LocalTime.now());
+			System.out.println("음원정보 파일 리딩 완료 종료 시간 " + LocalTime.now());
 			
 		} catch(FileNotFoundException e) {
 			e.printStackTrace();
@@ -90,7 +86,7 @@ public class ExcelExtractor {
 			e.printStackTrace();
 		}
 
-		logger.info("스크립트 파일 리딩 시작 시간 "+ LocalTime.now());
+		System.out.println("스크립트 파일 리딩 시작 시간 "+ LocalTime.now());
 		
 		try {
 			XSSFWorkbook scriptWorkbook = null;
@@ -118,11 +114,6 @@ public class ExcelExtractor {
 			
 			while(infoKeyItr.hasNext()) {
 				processRow++;
-				
-				if(processRow % 100 == 0) {
-					System.out.printf("\r처리중 : " + processRow + " / " + totalRow);
-				}
-				
 				tempFileName = infoKeyItr.next();
 				fileName = tempFileName.substring(0,3) + tempFileName.substring(5,12);
 				speakerType = tempFileName.substring(14,15);
@@ -145,60 +136,55 @@ public class ExcelExtractor {
 					
 						for(int rowIdx = 1; rowIdx < scriptSheet.getPhysicalNumberOfRows(); rowIdx++) {
 							scriptRow = scriptSheet.getRow(rowIdx);
-							
-							switch(rowIdx) {
-							case 1:
-								if(scriptRow.getCell(2).getStringCellValue().equalsIgnoreCase("title")) {
-									metaData.put("title", scriptRow.getCell(3).getStringCellValue());
-								} else {
-									wrongFlag = true;
+							if(rowIdx < 12){
+								switch(rowIdx) {
+									case 1:
+										if(scriptRow.getCell(2).getStringCellValue().equalsIgnoreCase("title")) {
+											metaData.put("title", scriptRow.getCell(3).getStringCellValue());
+										} else {
+											wrongFlag = true;
+										}
+										break;
+									case 2:
+										metaData.put("category1",scriptRow.getCell(3).getStringCellValue()); break;
+									case 3:
+										metaData.put("category2",scriptRow.getCell(3).getStringCellValue()); break;
+									case 4:
+										metaData.put("category3",scriptRow.getCell(3).getStringCellValue()); break;
+									case 5:
+										counselor.put("speaker_type", "상담사");
+										counselor.put("speaker_id", scriptRow.getCell(3).getStringCellValue()); break;
+									case 6:
+										counselor.put("speaker_age", scriptRow.getCell(3).getStringCellValue()); break;
+									case 7:
+										counselor.put("speaker_sex", scriptRow.getCell(3).getStringCellValue()); break;
+									case 8:
+										customer.put("speaker_type", "고객");
+										customer.put("speaker_id", scriptRow.getCell(3).getStringCellValue()); break;
+									case 9:
+										customer.put("speaker_age", scriptRow.getCell(3).getStringCellValue()); break;
+									case 10:
+										customer.put("speaker_sex", scriptRow.getCell(3).getStringCellValue()); break;
+									case 11:
+										break; // 발화 순번 row skip
+									default:
+										//고객 일 경우
+										if(scriptRow != null && scriptRow.getCell(2) != null && !scriptRow.getCell(2).toString().trim().equals("")) {
+											tempText = scriptRow.getCell(2).getStringCellValue();
+											counselorNum++;
+										}
+										//상담사일 경우
+										if(scriptRow != null && scriptRow.getCell(3) != null && !scriptRow.getCell(3).toString().trim().equals("")) {
+											tempText = scriptRow.getCell(3).toString();
+											customerNum++;
+										}
 								}
-								break;
-							case 2:
-								metaData.put("category1",scriptRow.getCell(3).getStringCellValue()); break;
-							case 3:
-								metaData.put("category2",scriptRow.getCell(3).getStringCellValue()); break;
-							case 4:
-								metaData.put("category3",scriptRow.getCell(3).getStringCellValue()); break;
-							case 5:
-								counselor.put("speaker_type", "상담사");
-								counselor.put("speaker_id", scriptRow.getCell(3).getStringCellValue()); break;
-							case 6:
-								counselor.put("speaker_age", scriptRow.getCell(3).getStringCellValue()); break;
-							case 7:
-								counselor.put("speaker_sex", scriptRow.getCell(3).getStringCellValue()); break;
-							case 8:
-								customer.put("speaker_type", "고객");
-								customer.put("speaker_id", scriptRow.getCell(3).getStringCellValue()); break;
-							case 9:
-								customer.put("speaker_age", scriptRow.getCell(3).getStringCellValue()); break;
-							case 10:
-								customer.put("speaker_sex", scriptRow.getCell(3).getStringCellValue()); break;
-							case 11:
-								break; // 발화 순번 row skip
-							default:
-								//고객 일 경우
-								if(scriptRow != null && scriptRow.getCell(2) != null && !scriptRow.getCell(2).toString().trim().equals("")) {
-									tempText = scriptRow.getCell(2).getStringCellValue();
-									counselorNum++;
-									
+
+								//엑셀 파일 메타데이터가 잘못 됐을경우 엑셀 파일 루프 벗어남
+								if(wrongFlag) {
+									break;
 								}
-								
-								//상담사일 경우
-								if(scriptRow != null && scriptRow.getCell(3) != null && !scriptRow.getCell(3).toString().trim().equals("")) {
-									tempText = scriptRow.getCell(3).toString();
-									customerNum++;
-								}
-								
-							}
-							
-							//엑셀 파일 메타데이터가 잘못 됐을경우 엑셀 파일 루프 벗어남
-							if(wrongFlag) {
-								break;
-							}
-							
-							//실제 스크립트는 엑셀 파일 12번쨰 row 부터 있음
-							if(rowIdx > 11) {
+							} else{
 								if(speakerType.equals("B")) {
 									if(Integer.parseInt(seqNum) == customerNum) {
 										fileMaker.fileMaker(infoList.get(tempFileName), metaData, customer, tempText, tempFileName, scriptFile.getName());
@@ -212,7 +198,6 @@ public class ExcelExtractor {
 										break;
 									}
 								}
-								
 							}
 						}
 						
@@ -222,7 +207,7 @@ public class ExcelExtractor {
 							break;
 						}
 						
-						//엑셀 파일이 잘못돼어 있음으로 실패에 추가 후 엘셀 닫기
+						//엑셀 파일이 잘못되어 있음으로 실패목록에 추가 후 엘셀 닫기
 						if(wrongFlag) {
 							wrongExcel.add(fileName);
 							scriptWorkbook.close();
@@ -272,15 +257,15 @@ public class ExcelExtractor {
 			logger.info("폴더 압축 완료");
 			
 		} catch (FileNotFoundException e) {
-			logger.error(e.getMessage());
+			System.out.println(e.getMessage());
 		} catch (InvalidFormatException e) {
-			logger.error(e.getMessage());
+			System.out.println(e.getMessage());
 		} catch (IOException e) {
-			logger.error("error excel file = " + errorFile);
-			logger.error(e.getMessage());
+			System.out.println("error excel file = " + errorFile);
+			System.out.println(e.getMessage());
 		} catch (NullPointerException e) {
-			logger.error("error excel file = " + errorFile);
-			logger.error(e.getMessage());
+			System.out.println("error excel file = " + errorFile);
+			System.out.println(e.getMessage());
 		}
 		
 		//중복 제거
